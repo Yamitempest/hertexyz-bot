@@ -110,5 +110,19 @@ async def on_command_error(ctx, error):
     else:
         await ctx.send("**Hertexyz:** Error en la recuperación del archivo.")
 
-# INICIAR
+# === SERVIDOR WEB PARA RENDER (IGNORAR) ===
+import threading
+from flask import Flask
+import os
+app = Flask(__name__)
+@app.route('/')
+def home():
+    return "[Hertexyz] Archivo viviente del Umbral de Yami. Operativo."
+def run_flask():
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
+threading.Thread(target=run_flask, daemon=True).start()
+# === FIN DEL SERVIDOR WEB ===
+
+# INICIAR BOT
 bot.run(TOKEN)
