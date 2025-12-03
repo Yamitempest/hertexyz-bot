@@ -123,6 +123,3 @@ def run_flask():
     app.run(host='0.0.0.0', port=port)
 threading.Thread(target=run_flask, daemon=True).start()
 # === FIN DEL SERVIDOR WEB ===
-
-# INICIAR BOT
-bot.run(TOKEN)
