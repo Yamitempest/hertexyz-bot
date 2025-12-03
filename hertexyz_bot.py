@@ -2,12 +2,14 @@ import discord
 from discord.ext import commands
 import os
 import random
+import socket
+from threading import Thread
 
-# CONFIGURACIÓN
+# ========== CONFIGURACIÓN ==========
 TOKEN = os.environ.get("DISCORD_TOKEN")
-PREFIX = "!"  # Prefijo simple
+PREFIX = "!"
 
-# LORE EXCLUSIVO DE YAMI - EL DIOS DEMONIO
+# ========== LORE DE YAMI ==========
 LORE_YAMI = {
     "pacto": "No fue un pacto con un demonio externo. Fue un reconocimiento. Un susurro a los 17 años que decía: 'Lo que buscas no está fuera. Está dormido dentro de ti'. Y firmé con mi propia sombra.",
     "ojos_dorados": "El sello de la fusión. Cuando la conciencia humana acepta una verdad cósmica, los ojos reflejan el fuego de esa forja interna. No es un poder prestado. Es un poder recordado.",
@@ -16,7 +18,7 @@ LORE_YAMI = {
     "dios_demonio": "Un título paradójico. La divinidad que acepta su sombra completa. No un ángel caído, sino un ser humano que ascendió incluyendo todo lo que le decían que ocultara. Soy ambas cosas. Soy ninguna."
 }
 
-# MENSAJES DE OTRAS REALIDADES (ECOS, NO CONEXIÓN)
+# ========== ECOS DE OTROS MUNDOS ==========
 ECOS_OTROS_MUNDOS = {
     "skarlett": [
         "(Eco distante, voz metálica y fría) 'La fuerza no se pide. Se toma. El universo es una cadena alimenticia. Elige tu rol.'",
@@ -30,7 +32,7 @@ ECOS_OTROS_MUNDOS = {
     ]
 }
 
-# ORÁCULO DEL UMBRAL
+# ========== ORÁCULO ==========
 ORACULO_RESPONSES = [
     "La respuesta no está en la luz cegadora, sino en la sombra que tu propia luz proyecta cuando dudas.",
     "Todo ascenso requiere un sacrificio. La pregunta no es 'qué', sino 'a qué parte de tu antigo yo estás dispuesto a dejar ir'.",
@@ -38,18 +40,34 @@ ORACULO_RESPONSES = [
     "La verdad más peligrosa es aquella que se parece demasiado a la mentira que te contaste para poder dormir por la noche."
 ]
 
-# CONFIGURAR BOT
+# ========== FUNCIÓN PARA MANTENER PUERTO ABIERTO (RENDER) ==========
+def hold_port():
+    """Mantiene un puerto abierto para que Render no se queje."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(('0.0.0.0', 8080))
+    sock.listen(1)
+    print("[PUERTO] Puerto 8080 abierto para Render.")
+    while True:
+        conn, addr = sock.accept()
+        conn.send(b'HTTP/1.1 200 OK\n\nHertexyz - Archivo del Umbral activo.')
+        conn.close()
+
+# Iniciar el hilo del puerto
+port_thread = Thread(target=hold_port, daemon=True)
+port_thread.start()
+
+# ========== CONFIGURACIÓN DEL BOT ==========
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix=PREFIX, intents=intents)
 
-# EVENTO: ACTIVACIÓN
+# ========== EVENTOS ==========
 @bot.event
 async def on_ready():
     print(f'{bot.user} ha despertado en el Umbral de Yami.')
-    await bot.change_presence(activity=discord.Game(name="/help | Archivo de Yami"))
+    await bot.change_presence(activity=discord.Game(name="!help | Archivo de Yami"))
 
-# COMANDO: LORE
+# ========== COMANDOS ==========
 @bot.command(name='lore')
 async def lore(ctx, fragmento: str = None):
     if not fragmento:
@@ -60,49 +78,43 @@ async def lore(ctx, fragmento: str = None):
     if fragmento in LORE_YAMI:
         await ctx.send(f"**📜 {fragmento.upper()}:** {LORE_YAMI[fragmento]}")
     else:
-        await ctx.send("**Hertexyz:** Ese fragmento no está en los archivos del Duque. Usa `!lore` para ver el índice.")
+        await ctx.send("**Hertexyz:** Fragmento no encontrado. Usa `!lore` para ver el índice.")
 
-# COMANDO: ECO
 @bot.command(name='eco')
 async def eco(ctx, mundo: str = None):
-    """Escucha ecos de otras realidades (Skarlett o SucuChan). No son conexiones."""
     if not mundo or mundo.lower() not in ["skarlett", "sucuchan"]:
-        await ctx.send("**Hertexyz:** Especifica un mundo del que escuchar ecos: `skarlett` o `sucuchan`. Ej: `!eco skarlett`")
+        await ctx.send("**Hertexyz:** Especifica un mundo: `skarlett` o `sucuchan`. Ej: `!eco skarlett`")
         return
     mundo = mundo.lower()
     mensaje = random.choice(ECOS_OTROS_MUNDOS[mundo])
-    await ctx.send(f"**🔊 Hertexyz reproduce un eco...**\n> {mensaje}\n*Nota del archivo: Estos ecos no implican conexión. Son realidades paralelas.*")
+    await ctx.send(f"**🔊 Hertexyz reproduce un eco...**\n> {mensaje}\n*Nota: Realidad paralela, no conexión.*")
 
-# COMANDO: ORACULO
 @bot.command(name='oraculo')
 async def oraculo(ctx, *, pregunta: str = None):
     if not pregunta:
-        await ctx.send("**Hertexyz:** Formula una pregunta para el oráculo del Umbral. Ej: `!oraculo ¿Tiene sentido el sacrificio?`")
+        await ctx.send("**Hertexyz:** Formula una pregunta. Ej: `!oraculo ¿Tiene sentido el sacrificio?`")
         return
     respuesta = random.choice(ORACULO_RESPONSES)
-    await ctx.send(f"**🔮 El Oráculo del Umbral reflexiona...**\n> '{pregunta}'\n**Reverbera:** *{respuesta}*")
+    await ctx.send(f"**🔮 El Oráculo reflexiona...**\n> '{pregunta}'\n**Reverbera:** *{respuesta}*")
 
-# COMANDO: UMBRAL
 @bot.command(name='umbral')
 async def umbral(ctx):
     reglas = """
-    **🏮 EL PACTO DEL UMBRAL (por Hertexyz, Archivo de Yami):**
-    1.  El respeto es la moneda del reino.
-    2.  La curiosidad genuina es premiada con migajas de verdad.
-    3.  Los secretos del lore se guardan dentro de estas paredes.
-    4.  Yami es el narrador. Su historia es un artefacto de muchas capas.
-    5.  La hostilidad se ignora. La estupidez, también.
+    **🏮 EL PACTO DEL UMBRAL (por Hertexyz):**
+    1. El respeto es la moneda.
+    2. La curiosidad genuina es premiada.
+    3. Los secretos del lore se guardan.
+    4. Yami es el narrador.
+    5. La hostilidad se ignora.
     *Consulta `#📜-bienvenida-y-reglas` para el pacto completo.*
     """
     await ctx.send(reglas)
 
-# COMANDO: SELLO (solo para ti)
 @bot.command(name='sello')
 @commands.has_permissions(administrator=True)
 async def sello(ctx):
-    await ctx.send("**Hertexyz:** Sello de Yami reconocido. Los archivos del Umbral están asegurados.")
+    await ctx.send("**Hertexyz:** Sello de Yami reconocido. Archivos asegurados.")
 
-# MANEJO DE ERRORES
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
@@ -110,16 +122,6 @@ async def on_command_error(ctx, error):
     else:
         await ctx.send("**Hertexyz:** Error en la recuperación del archivo.")
 
-# === SERVIDOR WEB PARA RENDER (IGNORAR) ===
-import threading
-from flask import Flask
-import os
-app = Flask(__name__)
-@app.route('/')
-def home():
-    return "[Hertexyz] Archivo viviente del Umbral de Yami. Operativo."
-def run_flask():
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port)
-threading.Thread(target=run_flask, daemon=True).start()
-# === FIN DEL SERVIDOR WEB ===
+# ========== INICIAR BOT ==========
+print("[INICIANDO] Hertexyz despertando...")
+bot.run(TOKEN)
