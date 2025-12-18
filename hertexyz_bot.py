@@ -5,10 +5,9 @@ import random
 import socket
 from threading import Thread
 
-TOKEN = os.environ.get("DISCORD_TOKEN")
-PREFIX = "!"
+TOKEN = os.environ.get('DISCORD_TOKEN')
+PREFIX = '!'
 
-# LORE PURA DE YAMI - SIN REFERENCIAS EXTERNAS
 LORE_YAMI = {
     "pacto": "No fue un pacto con un demonio externo. Fue un reconocimiento. Un susurro a los 17 años que decía: 'Lo que buscas no está fuera. Está dormido dentro de ti'. Y firmé con mi propia sombra.",
     "ojos_dorados": "El sello de la fusión. Cuando la conciencia humana acepta una verdad cósmica, los ojos reflejan el fuego de esa forja interna. No es un poder prestado. Es un poder recordado.",
@@ -23,24 +22,23 @@ ORACULO_RESPONSES = [
     "La respuesta no está en la luz cegadora, sino en la sombra que tu propia luz proyecta cuando dudas.",
     "Todo ascenso requiere un sacrificio. La pregunta no es 'qué', sino 'a qué parte de tu antigo yo estás dispuesto a dejar ir'.",
     "Los dioses que adoras son reflejos de tu propio potencial, distorsionados por el miedo a ser tan grande como ellos.",
-    "La verdad más peligrosa es aquella que se parece demasiado a la mentira que te contaste para poder dormir por la noche.",
-    "El poder no se encuentra. Se reconoce. Y ese reconocimiento es el primer acto de guerra contra tu antigua ignorancia."
+    "La verdad más peligrosa es aquella que se parece demasiado a la mentira que te contaste para poder dormir por la noche."
 ]
 
-# SERVIDOR WEB PARA RENDER
+# Puerto para Render (CRÍTICO)
 def hold_port():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('0.0.0.0', 8080))
-    sock.listen(1)
-    print("[SERVIDOR] Puerto 8080 abierto para Render.")
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(('0.0.0.0', 10000))
+    sock.listen(5)
+    print("Puerto 10000 abierto para Render")
     while True:
         conn, addr = sock.accept()
-        conn.send(b'HTTP/1.1 200 OK\n\nHertexyz - Archivo del Umbral activo.')
+        conn.send(b'HTTP/1.1 200 OK\r\n\r\nHertexyz vivo')
         conn.close()
 
 Thread(target=hold_port, daemon=True).start()
 
-# CONFIGURACIÓN BOT
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix=PREFIX, intents=intents)
@@ -53,7 +51,7 @@ async def on_ready():
 @bot.command(name='lore')
 async def lore(ctx, fragmento: str = None):
     if not fragmento:
-        lista = "**📚 Archivo de Yami:**\n`" + "`, `".join(LORE_YAMI.keys()) + "`"
+        lista = "**📚 Archivo de Yami:** `" + "`, `".join(LORE_YAMI.keys()) + "`"
         await ctx.send(lista)
         return
     fragmento = fragmento.lower()
@@ -73,14 +71,14 @@ async def oraculo(ctx, *, pregunta: str = None):
 @bot.command(name='umbral')
 async def umbral(ctx):
     reglas = """
-    **🏮 EL PACTO DEL UMBRAL (por Hertexyz):**
-    1. El respeto es la moneda.
-    2. La curiosidad genuina es premiada.
-    3. Los secretos del lore se guardan.
-    4. Yami es el narrador.
-    5. La hostilidad se ignora.
-    *Consulta `#📜-bienvenida-y-reglas` para el pacto completo.*
-    """
+**🏮 EL PACTO DEL UMBRAL (por Hertexyz):**
+1. El respeto es la moneda.
+2. La curiosidad genuina es premiada.
+3. Los secretos del lore se guardan.
+4. Yami es el narrador.
+5. La hostilidad se ignora.
+*Consulta `#📜-bienvenida-y-reglas` para el pacto completo.*
+"""
     await ctx.send(reglas)
 
 @bot.command(name='sello')
@@ -91,9 +89,8 @@ async def sello(ctx):
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
-        await ctx.send(f"**Hertexyz:** Comando no archivado. Usa `!lore`, `!oraculo` o `!umbral`.")
+        await ctx.send("**Hertexyz:** Comando no archivado. Usa `!lore`, `!oraculo` o `!umbral`.")
     else:
         await ctx.send("**Hertexyz:** Error en la recuperación del archivo.")
 
-print("[INICIANDO] Hertexyz, archivo puro de Yami, despertando...")
 bot.run(TOKEN)
